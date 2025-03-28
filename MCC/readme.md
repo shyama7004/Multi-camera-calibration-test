@@ -38,7 +38,7 @@ ccalib/
 
 1. fiducial_detectors.hpp
 
-```py
+```cpp
 /*M///////////////////////////////////////////////////////////////////////////////////////
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
