@@ -211,60 +211,80 @@ namespace cv
  //
  //M*/
 
+#include "precomp.hpp"
 #include <opencv2/ccalib/fiducial_detectors.hpp>
 #include <opencv2/objdetect/charuco_detector.hpp>
-#include <opencv2/aruco/charuco.hpp>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/aruco.hpp>
 #include <iostream>
 
 namespace cv
 {
     namespace ccalib
     {
-
-        /*--------------------------------------------------
-           ChessboardDetector
-        --------------------------------------------------*/
-
+        /**
+         * @class ChessboardDetector
+         * @brief Detects chessboard patterns in an image for calibration purposes.
+         */
         ChessboardDetector::ChessboardDetector(cv::Size patternSize, float squareSize)
             : patternSize_(patternSize),
               squareSize_(squareSize)
         {
         }
 
+        /**
+         * @brief Builds a 3D representation of a chessboard pattern.
+         *
+         * @param sz Size of the chessboard (width x height).
+         * @param sqSize Length of each square in the chessboard.
+         * @return std::vector<cv::Point3f> List of 3D points representing the chessboard.
+         */
         static std::vector<cv::Point3f> buildChessboard3D(cv::Size sz, float sqSize)
         {
             std::vector<cv::Point3f> pts;
             pts.reserve(sz.width * sz.height);
-            for (int r = 0; r < sz.height; ++r)
+            for (int rows = 0; rows < sz.height; ++rows)
             {
-                for (int c = 0; c < sz.width; ++c)
+                for (int cols = 0; cols < sz.width; ++cols)
                 {
-                    pts.push_back(cv::Point3f(c * sqSize, r * sqSize, 0.f));
+                    pts.push_back(cv::Point3f(cols * sqSize, rows * sqSize, 0.f)); // points are on z = 0 plane.
                 }
             }
             return pts;
         }
 
+        /**
+         * @brief Detects a chessboard pattern in the input image.
+         *
+         * @param inImage Input image containing the chessboard.
+         * @param objectPoints Output 3D points of the detected chessboard.
+         * @param imagePoints Output 2D points of the detected corners in the image.
+         * @return true if detection is successful, false otherwise.
+         */
         bool ChessboardDetector::detect(cv::InputArray inImage,
                                         std::vector<cv::Point3f> &objectPoints,
                                         std::vector<cv::Point2f> &imagePoints)
         {
             cv::Mat image = inImage.getMat();
 
+            if (image.empty())
+            {
+                std::cerr << "Input image is empty" << std::endl;
+                return false;
+            }
+
             bool found = findChessboardCorners(image, patternSize_, imagePoints,
                                                cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK);
             if (!found)
             {
+                std::cerr << "Chessboard corners not found" << std::endl;
                 return false;
             }
 
             if (image.channels() > 1)
             {
+                // Convert to grayscale if the image is in color for corner refinement.
                 cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
             }
+            // Refine the corner locations.
             cornerSubPix(image, imagePoints, cv::Size(11, 11), cv::Size(-1, -1),
                          cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.001));
 
@@ -272,10 +292,10 @@ namespace cv
             return true;
         }
 
-        /*--------------------------------------------------
-           CircleGridDetector
-        --------------------------------------------------*/
-
+        /**
+         * @class CircleGridDetector
+         * @brief Detects circular grid patterns (symmetric or asymmetric) in an image.
+         */
         CircleGridDetector::CircleGridDetector(cv::Size patternSize, float circleSize, bool asymmetric)
             : patternSize_(patternSize),
               circleSize_(circleSize),
@@ -283,44 +303,60 @@ namespace cv
         {
         }
 
+        /**
+         * @brief Builds a 3D representation of a circular grid pattern.
+         *
+         * @param sz Size of the grid (width x height).
+         * @param d Diameter or spacing between circles.
+         * @param asym Whether the grid is asymmetric or not.
+         * @return std::vector<cv::Point3f> List of 3D points representing the grid.
+         */
         static std::vector<cv::Point3f> buildCircle3D(cv::Size sz, float d, bool asym)
         {
             std::vector<cv::Point3f> pts;
             pts.reserve(sz.width * sz.height);
-            for (int r = 0; r < sz.height; ++r)
+            for (int rows = 0; rows < sz.height; ++rows)
             {
-                for (int c = 0; c < sz.width; ++c)
+                for (int cols = 0; cols < sz.width; ++cols)
                 {
-                    float offset = 0.f;
-                    if (asym && (r % 2 == 1))
+                    float offset = 0.f; // Offset for asymmetric grids.
+                    if (asym && (rows % 2 == 1))
                     {
                         offset = d * 0.5f;
                     }
-                    pts.push_back(cv::Point3f(c * d + offset, r * d, 0.f));
+                    pts.push_back(cv::Point3f(cols * d + offset, rows * d, 0.f));
                 }
             }
             return pts;
         }
 
+        /**
+         * @brief Detects a circle grid pattern in the input image.
+         *
+         * @param inImage Input image containing the circular grid.
+         * @param objectPoints Output 3D points of the detected grid.
+         * @param imagePoints Output 2D points of the detected circles in the image.
+         * @return true if detection is successful, false otherwise.
+         */
         bool CircleGridDetector::detect(cv::InputArray inImage,
                                         std::vector<cv::Point3f> &objectPoints,
                                         std::vector<cv::Point2f> &imagePoints)
         {
             cv::Mat image = inImage.getMat();
 
-            int flags = 0;
-            if (asymmetric_)
+            if (image.empty())
             {
-                flags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
+                std::cerr << "Input image is empty" << std::endl;
+                return false;
             }
-            else
-            {
-                flags = cv::CALIB_CB_SYMMETRIC_GRID;
-            }
+
+            int flags = asymmetric_ ? (cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING)
+                                    : cv::CALIB_CB_SYMMETRIC_GRID;
 
             bool found = findCirclesGrid(image, patternSize_, imagePoints, flags);
             if (!found)
             {
+                std::cerr << "Circle grid corners not found" << std::endl;
                 return false;
             }
 
@@ -328,10 +364,13 @@ namespace cv
             return true;
         }
 
-        /*--------------------------------------------------
-           CharucoDetector
-        --------------------------------------------------*/
-
+        /**
+         * @class CharucoDetector
+         * @brief Detects Charuco board patterns in an image.
+         *
+         * This detector uses a combination of ArUco marker detection and chessboard
+         * corner refinement to detect a Charuco board, which is used for camera calibration.
+         */
         CharucoDetector::CharucoDetector(const cv::aruco::CharucoBoard &board,
                                          const cv::aruco::CharucoParameters &charucoParams,
                                          const cv::aruco::DetectorParameters &detectorParams,
@@ -340,6 +379,17 @@ namespace cv
             detectorImpl_ = cv::makePtr<cv::aruco::CharucoDetector>(board, charucoParams, detectorParams, refineParams);
         }
 
+        /**
+         * @brief Detects a Charuco board in the input image.
+         *
+         * The method first detects ArUco markers in the image, then interpolates the
+         * chessboard corners corresponding to the Charuco board.
+         *
+         * @param inImage Input image containing the Charuco board.
+         * @param objectPoints Output 3D points of the board corresponding to the detected corners.
+         * @param imagePoints Output 2D image points of the detected Charuco corners.
+         * @return true if the board is successfully detected, false otherwise.
+         */
         bool CharucoDetector::detect(cv::InputArray inImage,
                                      std::vector<cv::Point3f> &objectPoints,
                                      std::vector<cv::Point2f> &imagePoints)
@@ -363,15 +413,23 @@ namespace cv
             return true;
         }
 
+        /**
+         * @brief Returns the Charuco board associated with the detector.
+         *
+         * @return const cv::aruco::CharucoBoard& Reference to the Charuco board.
+         */
         const cv::aruco::CharucoBoard &CharucoDetector::getBoard() const
         {
             return detectorImpl_->getBoard();
         }
 
-        /*--------------------------------------------------
-           ArucoDetector
-        --------------------------------------------------*/
-
+        /**
+         * @class ArucoDetector
+         * @brief Detects ArUco markers in an image.
+         *
+         * This detector finds ArUco markers in an input image and computes their corresponding
+         * 3D object points based on a predefined marker length.
+         */
         ArucoDetector::ArucoDetector(const cv::Ptr<cv::aruco::Dictionary> &dictionary, float markerLength,
                                      const cv::aruco::DetectorParameters &detectorParams)
             : dictionary_(dictionary),
@@ -380,6 +438,17 @@ namespace cv
         {
         }
 
+        /**
+         * @brief Detects ArUco markers in the input image.
+         *
+         * The function detects markers in the image using the provided dictionary and detector parameters.
+         * For each detected marker, the function computes the 3D coordinates of its four corners.
+         *
+         * @param inImage Input image containing ArUco markers.
+         * @param objectPoints Output 3D points corresponding to the corners of the detected markers.
+         * @param imagePoints Output 2D points corresponding to the marker corners in the image.
+         * @return true if one or more markers are detected, false otherwise.
+         */
         bool ArucoDetector::detect(cv::InputArray inImage,
                                    std::vector<cv::Point3f> &objectPoints,
                                    std::vector<cv::Point2f> &imagePoints)
@@ -398,14 +467,16 @@ namespace cv
 
             objectPoints.clear();
             imagePoints.clear();
+
+            // Precompute the 3D object points for a marker once.
+            std::vector<cv::Point3f> markerObjPts = {
+                cv::Point3f(0, 0, 0),
+                cv::Point3f(markerLength_, 0, 0),
+                cv::Point3f(markerLength_, markerLength_, 0),
+                cv::Point3f(0, markerLength_, 0)};
+
             for (size_t i = 0; i < markerIds.size(); i++)
             {
-                std::vector<cv::Point3f> markerObjPts = {
-                    cv::Point3f(0, 0, 0),
-                    cv::Point3f(markerLength_, 0, 0),
-                    cv::Point3f(markerLength_, markerLength_, 0),
-                    cv::Point3f(0, markerLength_, 0)};
-
                 objectPoints.insert(objectPoints.end(), markerObjPts.begin(), markerObjPts.end());
                 imagePoints.insert(imagePoints.end(), markerCorners[i].begin(), markerCorners[i].end());
             }
@@ -413,11 +484,21 @@ namespace cv
             return true;
         }
 
+        /**
+         * @brief Returns the ArUco dictionary used by the detector.
+         *
+         * @return const cv::Ptr<cv::aruco::Dictionary>& Reference to the ArUco dictionary.
+         */
         const cv::Ptr<cv::aruco::Dictionary> &ArucoDetector::getDictionary() const
         {
             return dictionary_;
         }
 
+        /**
+         * @brief Returns the length of the markers used in the detection.
+         *
+         * @return float Marker length in the same units as used for calibration.
+         */
         float ArucoDetector::getMarkerLength() const
         {
             return markerLength_;
@@ -425,6 +506,7 @@ namespace cv
 
     } // namespace ccalib
 } // namespace cv
+
 
 ```
 
