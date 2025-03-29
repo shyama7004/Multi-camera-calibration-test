@@ -1237,8 +1237,8 @@ namespace cv
         {
             cv::Mat output(imageSize, CV_8UC3, cv::Scalar(255, 255, 255));
 
-            // Generate ideal grid points
-            std::vector<cv::Point2f> idealPoints;
+            // Generate ideal grid points as 3D points (z=0)
+            std::vector<cv::Point3f> idealPoints;
             idealPoints.reserve((gridSize + 1) * (gridSize + 1));
             for (int i = 0; i <= gridSize; i++)
             {
@@ -1246,7 +1246,7 @@ namespace cv
                 for (int j = 0; j <= gridSize; j++)
                 {
                     float x = j * (float)imageSize.width / gridSize;
-                    idealPoints.push_back(cv::Point2f(x, y));
+                    idealPoints.push_back(cv::Point3f(x, y, 0.f));
                 }
             }
 
@@ -1454,26 +1454,30 @@ int main(int argc, char **argv)
 10. samples\camera1.yaml
 
 ```yaml
-# Configuration for Camera 1
+%YAML:1.0
+
 camera_id: 1
 pattern_type: chessboard
 pattern_size: [8, 6]
 square_size: 0.028
 image_paths:
-  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyama's dataset/chessboard/Extrinsics/set_0/anshu/*.jpeg"
-  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyama's dataset/chessboard/Extrinsics/set_1/anshu/*.jpeg"
+  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyamas_dataset/chessboard/Extrinsics/set_0/anshu/1.jpeg"
+  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyamas_dataset/chessboard/Extrinsics/set_0/anshu/2.jpeg"
+
 
 ```
 11. samples\camera2.yaml
 
 ```yaml
-# Configuration for Camera 1
+%YAML:1.0
+
 camera_id: 1
 pattern_type: chessboard
 pattern_size: [8, 6]
 square_size: 0.028
 image_paths:
-  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyama's dataset/chessboard/Extrinsics/set_0/f14/*.jpeg"
-  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyama's dataset/chessboard/Extrinsics/set_1/f14/*.jpeg"
+  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyamas_dataset/chessboard/Extrinsics/set_0/f14/1.jpeg"
+  - "/Users/sankarsanbisoyi/Desktop/Dataset/shyamas_dataset/chessboard/Extrinsics/set_0/f14/2.jpeg"
+
 
 ```
