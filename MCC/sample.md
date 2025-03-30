@@ -41,7 +41,8 @@ ccalib/
 
 ### Components added :
 
-1. fiducial_detectors.hpp
+<details> <summary>
+    fiducial_detectors.hpp </summary>
 
 ```cpp
 /*M///////////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +52,6 @@ ccalib/
 //  By downloading, copying, installing or using the software you agree to this license.
 //  If you do not agree to this license, do not download, install,
 //  copy or use the software.
-//
 //
 //                           License Agreement
 //                For Open Source Computer Vision Library
@@ -96,32 +96,87 @@ namespace cv
 {
     namespace ccalib
     {
+        /**
+         * @brief Base class for fiducial detectors.
+         */
         class CV_EXPORTS FiducialDetector
         {
         public:
             virtual ~FiducialDetector() {}
+            /**
+             * @brief Detect fiducial points in the given image.
+             * @param image Input image.
+             * @param objectPoints Output 3D object points.
+             * @param imagePoints Output 2D image points.
+             * @return true if detection was successful.
+             */
             virtual bool detect(cv::InputArray image, std::vector<cv::Point3f> &objectPoints, std::vector<cv::Point2f> &imagePoints) = 0;
         };
 
+        /**
+         * @brief Detector for chessboard patterns.
+         */
         class CV_EXPORTS ChessboardDetector : public FiducialDetector
         {
         public:
-            ChessboardDetector(cv::Size patternSize, float squareSize);
+            /**
+             * @brief Constructs a ChessboardDetector.
+             * @param patternSize Number of inner corners per chessboard row and column.
+             * @param squareSize Size of a square in user-defined units.
+             * @param detectionFlags Flags for corner detection.
+             * @param subPixCriteria Termination criteria for corner refinement.
+             */
+            ChessboardDetector(cv::Size patternSize, float squareSize,
+                               int detectionFlags = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK,
+                               cv::TermCriteria subPixCriteria = cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.001));
+
             bool detect(cv::InputArray image, std::vector<cv::Point3f> &objectPoints, std::vector<cv::Point2f> &imagePoints) override;
+
+            /**
+             * @brief Set new detection flags.
+             * @param flags New flags.
+             */
+            void setDetectionFlags(int flags);
+            /**
+             * @brief Set new subpixel refinement criteria.
+             * @param criteria New termination criteria.
+             */
+            void setSubPixCriteria(cv::TermCriteria criteria);
+            float getSquareSize() const { return squareSize_; } // maybe needed later
 
         private:
             cv::Size patternSize_;
             float squareSize_;
+            int detectionFlags_;
+            cv::TermCriteria subPixCriteria_;
+            std::vector<cv::Point3f> precomputedObjectPoints_;
         };
 
+        /**
+         * @brief Detector for Aruco markers.
+         */
         class CV_EXPORTS ArucoDetector : public FiducialDetector
         {
         public:
+            /**
+             * @brief Constructs an ArucoDetector.
+             * @param dictionary Aruco dictionary.
+             * @param markerLength Length of the marker's side.
+             * @param detectorParams Detector parameters.
+             */
             ArucoDetector(const cv::Ptr<cv::aruco::Dictionary> &dictionary, float markerLength, const cv::aruco::DetectorParameters &detectorParams = cv::aruco::DetectorParameters());
 
             bool detect(cv::InputArray image, std::vector<cv::Point3f> &objectPoints, std::vector<cv::Point2f> &imagePoints) override;
 
+            /**
+             * @brief Returns the associated Aruco dictionary.
+             * @return Reference to the dictionary.
+             */
             const cv::Ptr<cv::aruco::Dictionary> &getDictionary() const;
+            /**
+             * @brief Returns the marker length.
+             * @return Marker length.
+             */
             float getMarkerLength() const;
 
         private:
@@ -130,21 +185,44 @@ namespace cv
             cv::aruco::DetectorParameters detectorParams_;
         };
 
+        /**
+         * @brief Detector for circle grid patterns.
+         */
         class CV_EXPORTS CircleGridDetector : public FiducialDetector
         {
         public:
+            /**
+             * @brief Constructs a CircleGridDetector.
+             * @param patternSize Number of circles per row and column.
+             * @param circleSize Diameter of a circle.
+             * @param asymmetric Flag indicating whether the grid is asymmetric.
+             */
             CircleGridDetector(cv::Size patternSize, float circleSize, bool asymmetric);
+
             bool detect(cv::InputArray image, std::vector<cv::Point3f> &objectPoints, std::vector<cv::Point2f> &imagePoints) override;
+
+            float getCircleSize() const { return circleSize_; } // maybe needed later
 
         private:
             cv::Size patternSize_;
             float circleSize_;
             bool asymmetric_;
+            std::vector<cv::Point3f> precomputedObjectPoints_;
         };
 
+        /**
+         * @brief Detector for ChArUco boards.
+         */
         class CV_EXPORTS CharucoDetector : public FiducialDetector
         {
         public:
+            /**
+             * @brief Constructs a CharucoDetector.
+             * @param board The ChArUco board.
+             * @param charucoParams Parameters specific to ChArUco detection.
+             * @param detectorParams General Aruco detector parameters.
+             * @param refineParams Parameters for refining detections.
+             */
             CharucoDetector(const cv::aruco::CharucoBoard &board,
                             const cv::aruco::CharucoParameters &charucoParams = cv::aruco::CharucoParameters(),
                             const cv::aruco::DetectorParameters &detectorParams = cv::aruco::DetectorParameters(),
@@ -153,6 +231,10 @@ namespace cv
             bool detect(cv::InputArray image,
                         std::vector<cv::Point3f> &objectPoints,
                         std::vector<cv::Point2f> &imagePoints) override;
+            /**
+             * @brief Returns the associated ChArUco board.
+             * @return Reference to the board.
+             */
             const cv::aruco::CharucoBoard &getBoard() const;
 
         private:
@@ -164,10 +246,12 @@ namespace cv
 
 #endif // OPENCV_CCALIB_FIDUCIAL_DETECTORS_HPP
 
+
 ```
 
-
-2. fiducial_detectors.cpp
+</details>
+<details> <summary> fiducial_detectors.cpp
+</summary>
 
 ```cpp
 /*M///////////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +261,6 @@ namespace cv
  //  By downloading, copying, installing or using the software you agree to this license.
  //  If you do not agree to this license, do not download, install,
  //  copy or use the software.
- //
  //
  //                           License Agreement
  //                For Open Source Computer Vision Library
@@ -214,163 +297,146 @@ namespace cv
 #include "precomp.hpp"
 #include <opencv2/ccalib/fiducial_detectors.hpp>
 #include <opencv2/objdetect/charuco_detector.hpp>
+#include <opencv2/core/utils/logger.hpp>
 #include <iostream>
 
 namespace cv
 {
     namespace ccalib
     {
-        /**
-         * @class ChessboardDetector
-         * @brief Detects chessboard patterns in an image for calibration purposes.
-         */
-        ChessboardDetector::ChessboardDetector(cv::Size patternSize, float squareSize)
-            : patternSize_(patternSize),
-              squareSize_(squareSize)
+        // this is a helper function to convert an image to grayscale.
+        namespace
         {
+            cv::Mat toGray(const cv::Mat &image)
+            {
+                if (image.channels() > 1)
+                {
+                    cv::Mat gray;
+                    cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+                    return gray;
+                }
+                return image;
+            }
         }
 
-        /**
-         * @brief Builds a 3D representation of a chessboard pattern.
-         *
-         * @param sz Size of the chessboard (width x height).
-         * @param sqSize Length of each square in the chessboard.
-         * @return std::vector<cv::Point3f> List of 3D points representing the chessboard.
-         */
+        // Build a 3D chessboard object points vector based on board size and square size.
         static std::vector<cv::Point3f> buildChessboard3D(cv::Size sz, float sqSize)
         {
             std::vector<cv::Point3f> pts;
             pts.reserve(sz.width * sz.height);
+            // Loop over rows and columns to create object points.
             for (int rows = 0; rows < sz.height; ++rows)
             {
                 for (int cols = 0; cols < sz.width; ++cols)
                 {
-                    pts.push_back(cv::Point3f(cols * sqSize, rows * sqSize, 0.f)); // points are on z = 0 plane.
+                    pts.emplace_back(cols * sqSize, rows * sqSize, 0.f);
                 }
             }
             return pts;
         }
 
-        /**
-         * @brief Detects a chessboard pattern in the input image.
-         *
-         * @param inImage Input image containing the chessboard.
-         * @param objectPoints Output 3D points of the detected chessboard.
-         * @param imagePoints Output 2D points of the detected corners in the image.
-         * @return true if detection is successful, false otherwise.
-         */
+        // Constructor for ChessboardDetector: initializes parameters and precomputed object points.
+        ChessboardDetector::ChessboardDetector(cv::Size patternSize, float squareSize, int detectionFlags, cv::TermCriteria subPixCriteria)
+            : patternSize_(patternSize), squareSize_(squareSize),
+              detectionFlags_(detectionFlags), subPixCriteria_(subPixCriteria),
+              precomputedObjectPoints_(buildChessboard3D(patternSize, squareSize))
+        {
+        }
+        // Set the detection flags for the chessboard detector.
+        void ChessboardDetector::setDetectionFlags(int flags)
+        {
+            detectionFlags_ = flags;
+        }
+
+        // Set the criteria for sub-pixel corner refinement.
+        void ChessboardDetector::setSubPixCriteria(cv::TermCriteria criteria)
+        {
+            subPixCriteria_ = criteria;
+        }
+
+        // Detect chessboard corners in the input image.
         bool ChessboardDetector::detect(cv::InputArray inImage,
                                         std::vector<cv::Point3f> &objectPoints,
                                         std::vector<cv::Point2f> &imagePoints)
         {
             cv::Mat image = inImage.getMat();
-
             if (image.empty())
             {
-                std::cerr << "Input image is empty" << std::endl;
+                CV_LOG_WARNING(NULL, "Input image is empty");
                 return false;
             }
 
-            bool found = findChessboardCorners(image, patternSize_, imagePoints,
-                                               cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE | cv::CALIB_CB_FAST_CHECK);
+            cv::Mat grayImage = toGray(image);
+
+            bool found = findChessboardCorners(grayImage, patternSize_, imagePoints, detectionFlags_);
+
             if (!found)
             {
-                std::cerr << "Chessboard corners not found" << std::endl;
+                CV_LOG_WARNING(NULL, "Chessboard corners not found");
                 return false;
             }
 
-            if (image.channels() > 1)
-            {
-                // Convert to grayscale if the image is in color for corner refinement.
-                cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-            }
-            // Refine the corner locations.
-            cornerSubPix(image, imagePoints, cv::Size(11, 11), cv::Size(-1, -1),
-                         cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.001));
-
-            objectPoints = buildChessboard3D(patternSize_, squareSize_);
+            // Refine corner positions using sub-pixel accuracy.
+            cornerSubPix(grayImage, imagePoints, cv::Size(11, 11), cv::Size(-1, -1), subPixCriteria_);
+            objectPoints = precomputedObjectPoints_;
             return true;
         }
 
-        /**
-         * @class CircleGridDetector
-         * @brief Detects circular grid patterns (symmetric or asymmetric) in an image.
-         */
-        CircleGridDetector::CircleGridDetector(cv::Size patternSize, float circleSize, bool asymmetric)
-            : patternSize_(patternSize),
-              circleSize_(circleSize),
-              asymmetric_(asymmetric)
-        {
-        }
-
-        /**
-         * @brief Builds a 3D representation of a circular grid pattern.
-         *
-         * @param sz Size of the grid (width x height).
-         * @param d Diameter or spacing between circles.
-         * @param asym Whether the grid is asymmetric or not.
-         * @return std::vector<cv::Point3f> List of 3D points representing the grid.
-         */
+        // Build a 3D circle grid object points vector based on grid size, circle distance, and asymmetry flag.
         static std::vector<cv::Point3f> buildCircle3D(cv::Size sz, float d, bool asym)
         {
             std::vector<cv::Point3f> pts;
             pts.reserve(sz.width * sz.height);
+            // Loop over rows and columns, you can adjust offset for asymmetric grid.
             for (int rows = 0; rows < sz.height; ++rows)
             {
                 for (int cols = 0; cols < sz.width; ++cols)
                 {
-                    float offset = 0.f; // Offset for asymmetric grids.
-                    if (asym && (rows % 2 == 1))
-                    {
-                        offset = d * 0.5f;
-                    }
-                    pts.push_back(cv::Point3f(cols * d + offset, rows * d, 0.f));
+                    float offset = (asym && (rows % 2 == 1)) ? d * 0.5f : 0.f;
+                    pts.emplace_back(cols * d + offset, rows * d, 0.f);
                 }
             }
             return pts;
         }
 
-        /**
-         * @brief Detects a circle grid pattern in the input image.
-         *
-         * @param inImage Input image containing the circular grid.
-         * @param objectPoints Output 3D points of the detected grid.
-         * @param imagePoints Output 2D points of the detected circles in the image.
-         * @return true if detection is successful, false otherwise.
-         */
+        // Constructor for CircleGridDetector: initializes parameters and precomputed object points.
+        CircleGridDetector::CircleGridDetector(cv::Size patternSize, float circleSize, bool asymmetric)
+            : patternSize_(patternSize), circleSize_(circleSize), asymmetric_(asymmetric),
+              precomputedObjectPoints_(buildCircle3D(patternSize, circleSize, asymmetric))
+        {
+        }
+
+        // Detect circle grid corners in the input image.
         bool CircleGridDetector::detect(cv::InputArray inImage,
                                         std::vector<cv::Point3f> &objectPoints,
                                         std::vector<cv::Point2f> &imagePoints)
         {
             cv::Mat image = inImage.getMat();
-
             if (image.empty())
             {
-                std::cerr << "Input image is empty" << std::endl;
+                CV_LOG_WARNING(NULL, "Input image is empty");
                 return false;
             }
 
+            // Use helper function for grayscale conversion.
+            cv::Mat grayImage = toGray(image);
+
+            // Set appropriate flags based on whether grid is asymmetric.
             int flags = asymmetric_ ? (cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING)
                                     : cv::CALIB_CB_SYMMETRIC_GRID;
 
-            bool found = findCirclesGrid(image, patternSize_, imagePoints, flags);
+            bool found = findCirclesGrid(grayImage, patternSize_, imagePoints, flags);
             if (!found)
             {
-                std::cerr << "Circle grid corners not found" << std::endl;
+                CV_LOG_WARNING(NULL, "Circle grid corners not found");
                 return false;
             }
 
-            objectPoints = buildCircle3D(patternSize_, circleSize_, asymmetric_);
+            objectPoints = precomputedObjectPoints_;
             return true;
         }
 
-        /**
-         * @class CharucoDetector
-         * @brief Detects Charuco board patterns in an image.
-         *
-         * This detector uses a combination of ArUco marker detection and chessboard
-         * corner refinement to detect a Charuco board, which is used for camera calibration.
-         */
+        // Constructor for CharucoDetector: initializes the underlying ArUco Charuco detector.
         CharucoDetector::CharucoDetector(const cv::aruco::CharucoBoard &board,
                                          const cv::aruco::CharucoParameters &charucoParams,
                                          const cv::aruco::DetectorParameters &detectorParams,
@@ -379,76 +445,65 @@ namespace cv
             detectorImpl_ = cv::makePtr<cv::aruco::CharucoDetector>(board, charucoParams, detectorParams, refineParams);
         }
 
-        /**
-         * @brief Detects a Charuco board in the input image.
-         *
-         * The method first detects ArUco markers in the image, then interpolates the
-         * chessboard corners corresponding to the Charuco board.
-         *
-         * @param inImage Input image containing the Charuco board.
-         * @param objectPoints Output 3D points of the board corresponding to the detected corners.
-         * @param imagePoints Output 2D image points of the detected Charuco corners.
-         * @return true if the board is successfully detected, false otherwise.
-         */
+        // Detect Charuco board in the input image.
         bool CharucoDetector::detect(cv::InputArray inImage,
                                      std::vector<cv::Point3f> &objectPoints,
                                      std::vector<cv::Point2f> &imagePoints)
         {
             cv::Mat image = inImage.getMat();
 
-            cv::Mat charucoCorners, charucoIds;
-            detectorImpl_->detectBoard(image, charucoCorners, charucoIds);
+            if (image.empty())
+            {
+                CV_LOG_WARNING(NULL, "Input image is empty");
+                return false;
+            }
+            cv::Mat grayImage = toGray(image);
 
+            std::vector<cv::Point2f> charucoCorners;
+            std::vector<int> charucoIds;
+
+            // Detect Charuco board corners and corresponding IDs.
+            detectorImpl_->detectBoard(grayImage, charucoCorners, charucoIds);
+
+            // Verify that corners and IDs are detected.
             if (charucoCorners.empty() || charucoIds.empty())
             {
+                CV_LOG_WARNING(NULL, "Charuco corners or IDs not found");
                 return false;
             }
 
             detectorImpl_->getBoard().matchImagePoints(charucoCorners, charucoIds, objectPoints, imagePoints);
             if (objectPoints.empty() || imagePoints.empty())
             {
+                CV_LOG_WARNING(NULL, "No matching points found");
                 return false;
             }
 
             return true;
         }
 
-        /**
-         * @brief Returns the Charuco board associated with the detector.
-         *
-         * @return const cv::aruco::CharucoBoard& Reference to the Charuco board.
-         */
+        // Get the associated Charuco board.
         const cv::aruco::CharucoBoard &CharucoDetector::getBoard() const
         {
             return detectorImpl_->getBoard();
         }
 
-        /**
-         * @class ArucoDetector
-         * @brief Detects ArUco markers in an image.
-         *
-         * This detector finds ArUco markers in an input image and computes their corresponding
-         * 3D object points based on a predefined marker length.
-         */
+        // Constructor for ArucoDetector: initializes dictionary, marker length, and detector parameters.
         ArucoDetector::ArucoDetector(const cv::Ptr<cv::aruco::Dictionary> &dictionary, float markerLength,
                                      const cv::aruco::DetectorParameters &detectorParams)
-            : dictionary_(dictionary),
-              markerLength_(markerLength),
-              detectorParams_(detectorParams)
+            : dictionary_(dictionary), markerLength_(markerLength), detectorParams_(detectorParams) {}
+
+        // Build a 3D marker object points vector based on marker length.
+        static std::vector<cv::Point3f> buildMarker3D(float markerLength)
         {
+            return {
+                {0.f, 0.f, 0.f},
+                {markerLength, 0.f, 0.f},
+                {markerLength, markerLength, 0.f},
+                {0.f, markerLength, 0.f}};
         }
 
-        /**
-         * @brief Detects ArUco markers in the input image.
-         *
-         * The function detects markers in the image using the provided dictionary and detector parameters.
-         * For each detected marker, the function computes the 3D coordinates of its four corners.
-         *
-         * @param inImage Input image containing ArUco markers.
-         * @param objectPoints Output 3D points corresponding to the corners of the detected markers.
-         * @param imagePoints Output 2D points corresponding to the marker corners in the image.
-         * @return true if one or more markers are detected, false otherwise.
-         */
+        // Detect ArUco markers in the input image.
         bool ArucoDetector::detect(cv::InputArray inImage,
                                    std::vector<cv::Point3f> &objectPoints,
                                    std::vector<cv::Point2f> &imagePoints)
@@ -461,19 +516,12 @@ namespace cv
             detector.detectMarkers(image, markerCorners, markerIds, rejectedCandidates);
 
             if (markerIds.empty())
-            {
                 return false;
-            }
 
             objectPoints.clear();
             imagePoints.clear();
 
-            // Precompute the 3D object points for a marker once.
-            std::vector<cv::Point3f> markerObjPts = {
-                cv::Point3f(0, 0, 0),
-                cv::Point3f(markerLength_, 0, 0),
-                cv::Point3f(markerLength_, markerLength_, 0),
-                cv::Point3f(0, markerLength_, 0)};
+            std::vector<cv::Point3f> markerObjPts = buildMarker3D(markerLength_);
 
             for (size_t i = 0; i < markerIds.size(); i++)
             {
@@ -484,21 +532,13 @@ namespace cv
             return true;
         }
 
-        /**
-         * @brief Returns the ArUco dictionary used by the detector.
-         *
-         * @return const cv::Ptr<cv::aruco::Dictionary>& Reference to the ArUco dictionary.
-         */
+        // Get the dictionary used for marker detection.
         const cv::Ptr<cv::aruco::Dictionary> &ArucoDetector::getDictionary() const
         {
             return dictionary_;
         }
 
-        /**
-         * @brief Returns the length of the markers used in the detection.
-         *
-         * @return float Marker length in the same units as used for calibration.
-         */
+        // Get the marker length parameter.
         float ArucoDetector::getMarkerLength() const
         {
             return markerLength_;
@@ -509,17 +549,55 @@ namespace cv
 
 
 ```
+</details>
 
-3. calibration_utils.hpp
+<details>
+    <summary> calibration_utils.hpp </summary>
 
 ```cpp
+/*M///////////////////////////////////////////////////////////////////////////////////////
+//
+//  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+//
+//  By downloading, copying, installing or using the software you agree to this license.
+//  If you do not agree to this license, do not download, install,
+//  copy or use the software.
+//
+//
+//                           License Agreement
+//                For Open Source Computer Vision Library
+//
+// Copyright (C) 2015, Baisheng Lai (laibaisheng@gmail.com), Zhejiang University,
+// all rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+//
+//   * Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//
+//   * Redistributions in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+//
+//   * The name of the copyright holders may not be used to endorse or promote products
+//     derived from this software without specific prior written permission.
+//
+// This software is provided by the copyright holders and contributors "as is" and
+// any express or implied warranties, including, but not limited to, the implied
+// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused
+// and on any theory of liability, whether in contract, strict liability,
+// or tort (including negligence or otherwise) arising in any way out of
+// the use of this software, even if advised of the possibility of such damage.
+//
+//M*/
+
 #ifndef OPENCV_CCALIB_CALIBRATION_UTILS_HPP
 #define OPENCV_CCALIB_CALIBRATION_UTILS_HPP
-
-/**
- * @file calibration_utils.hpp
- * @brief Utility functions for computing reprojection error and relative poses.
- */
 
 #include <opencv2/core.hpp>
 #include <vector>
@@ -563,24 +641,72 @@ namespace cv
 #endif // OPENCV_CCALIB_CALIBRATION_UTILS_HPP
 
 ```
-4. calibration_utils.cpp
+</details>
+
+<details>
+    <summary> calibration_utils.cpp </summary>
 
 ```cpp
+/*M///////////////////////////////////////////////////////////////////////////////////////
+//
+//  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+//
+//  By downloading, copying, installing or using the software you agree to this license.
+//  If you do not agree to this license, do not download, install,
+//  copy or use the software.
+//
+//
+//                           License Agreement
+//                For Open Source Computer Vision Library
+//
+// Copyright (C) 2015, Baisheng Lai (laibaisheng@gmail.com), Zhejiang University,
+// all rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+//
+//   * Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//
+//   * Redistributions in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+//
+//   * The name of the copyright holders may not be used to endorse or promote products
+//     derived from this software without specific prior written permission.
+//
+// This software is provided by the copyright holders and contributors "as is" and
+// any express or implied warranties, including, but not limited to, the implied
+// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused
+// and on any theory of liability, whether in contract, strict liability,
+// or tort (including negligence or otherwise) arising in any way out of
+// the use of this software, even if advised of the possibility of such damage.
+//
+//M*/
 
-/**
- * @file calibration_utils.cpp
- * @brief Implementation of reprojection error and relative pose computations.
- */
-
+#include "precomp.hpp"
 #include "opencv2/ccalib/calibration_utils.hpp"
-#include <opencv2/calib3d.hpp>
-#include <cmath>
 
 namespace cv
 {
     namespace ccalib
     {
 
+        /**
+         * @brief Computes the average reprojection error for a set of views.
+         *
+         * @param objectPoints 3D object points in world coordinates.
+         * @param imagePoints 2D image points corresponding to objectPoints.
+         * @param cameraMatrix Intrinsic parameters of the camera.
+         * @param distCoeffs Distortion coefficients.
+         * @param rvecs Rotation vectors for each view.
+         * @param tvecs Translation vectors for each view.
+         * @return Average reprojection error.
+         */
         double computeReprojectionError(
             const std::vector<std::vector<cv::Point3f>> &objectPoints,
             const std::vector<std::vector<cv::Point2f>> &imagePoints,
@@ -589,12 +715,16 @@ namespace cv
             const std::vector<cv::Mat> &rvecs,
             const std::vector<cv::Mat> &tvecs)
         {
+            CV_Assert(objectPoints.size() == imagePoints.size());
+            CV_Assert(objectPoints.size() == rvecs.size());
+            CV_Assert(objectPoints.size() == tvecs.size());
+
             double totalErr = 0.0;
             size_t totalPoints = 0;
+            std::vector<cv::Point2f> projected; // I declared it outside the loop to avoid reallocating it in each iteration
 
-            for (size_t i = 0; i < objectPoints.size(); i++)
+            for (size_t i = 0; i < objectPoints.size(); ++i)
             {
-                std::vector<cv::Point2f> projected;
                 cv::projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, projected);
 
                 double err = norm(imagePoints[i], projected, cv::NORM_L2);
@@ -605,16 +735,27 @@ namespace cv
             return std::sqrt(totalErr / totalPoints);
         }
 
+        /**
+         * @brief Computes the relative rotation and translation between two camera poses.
+         *
+         * @param rvec1 Rotation vector of camera 1.
+         * @param tvec1 Translation vector of camera 1.
+         * @param rvec2 Rotation vector of camera 2.
+         * @param tvec2 Translation vector of camera 2.
+         * @param R_rel Output: relative rotation matrix from camera 1 to camera 2.
+         * @param t_rel Output: relative translation vector from camera 1 to camera 2.
+         */
         void computeRelativePose(
             const cv::Mat &rvec1, const cv::Mat &tvec1,
             const cv::Mat &rvec2, const cv::Mat &tvec2,
             cv::Mat &R_rel, cv::Mat &t_rel)
         {
             cv::Mat R1, R2;
-            Rodrigues(rvec1, R1);
-            Rodrigues(rvec2, R2);
+            cv::Rodrigues(rvec1, R1);
+            cv::Rodrigues(rvec2, R2);
 
-            R_rel = R2 * R1.t();
+            const cv::Mat R1_inv = R1.t(); // inverse of R1
+            R_rel = R2 * R1_inv;
             t_rel = tvec2 - R_rel * tvec1;
         }
 
@@ -623,6 +764,7 @@ namespace cv
 
 
 ```
+</details>
 
 5. multicam_calibrator.hpp
 
