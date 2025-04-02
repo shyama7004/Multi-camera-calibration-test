@@ -1,6 +1,6 @@
 ### Progress uptil now :
 
-#### Project description : 
+#### Project description :
 
 We are looking for a student to curate best of class calibration data, collect calibration data with various OpenCV Fiducials, and graphically produce calibration board and camera models data (script). Simultaneously, begin to write comprehensive test scripts of all the existing calibration functions. While doing this, if necessary, improve the calibration documentation. Derive from this expected accuracy of fiducial types for various camera types.
 
