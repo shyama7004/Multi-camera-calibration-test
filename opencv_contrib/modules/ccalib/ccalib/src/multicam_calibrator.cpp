@@ -9,23 +9,12 @@
 #include "precomp.hpp"
 #include <iostream>
 #include <map>
+#include <opencv2/core/utils/filesystem.hpp>
 #include <sys/stat.h>
 
 namespace {
 // Global constant for the default dictionary.
 const cv::aruco::PredefinedDictionaryType DEFAULT_DICT = cv::aruco::DICT_4X4_50;
-
-// Helper function to compute the relative rotation and translation from the
-// reference camera.
-void computeRelativePose(const cv::Mat &rRef, const cv::Mat &tRef,
-                         const cv::Mat &rCam, const cv::Mat &tCam,
-                         cv::Mat &R_rel, cv::Mat &t_rel) {
-  cv::Mat R_ref, R_cam;
-  cv::Rodrigues(rRef, R_ref);
-  cv::Rodrigues(rCam, R_cam);
-  R_rel = R_cam * R_ref.t();
-  t_rel = tCam - R_rel * tRef;
-}
 
 // Helper: Map a dictionary name string to a predefined ArUco dictionary.
 cv::Ptr<cv::aruco::Dictionary> getArucoDictionary(const std::string &dictName) {
@@ -61,11 +50,6 @@ cv::Ptr<cv::aruco::Dictionary> getArucoDictionary(const std::string &dictName) {
   return cv::makePtr<cv::aruco::Dictionary>(
       cv::aruco::getPredefinedDictionary(DEFAULT_DICT));
 }
-
-// Helper: Load the dictionary based on a provided dictionary string.
-cv::Ptr<cv::aruco::Dictionary> loadDictionary(const std::string &dictStr) {
-  return getArucoDictionary(dictStr);
-}
 } // namespace
 
 namespace cv {
@@ -73,19 +57,6 @@ namespace ccalib {
 
 MultiCameraCalibrator::MultiCameraCalibrator() {}
 MultiCameraCalibrator::~MultiCameraCalibrator() {}
-
-void MultiCameraCalibrator::addCamera(const std::string &configPath) {
-  CameraData data;
-  loadConfig(configPath, data);
-  if (data.cameraId < 0) {
-    std::cerr << "Invalid camera_id in " << configPath << std::endl;
-    return;
-  }
-  if (referenceCameraId_ < 0) {
-    referenceCameraId_ = data.cameraId;
-  }
-  cameraDatas_[data.cameraId] = data;
-}
 
 void MultiCameraCalibrator::loadMultiCameraConfig(
     const std::string &configPath) {
@@ -172,11 +143,13 @@ void MultiCameraCalibrator::detectAllPatterns() {
       detector = cv::makePtr<CircleGridDetector>(cData.patternSize,
                                                  cData.squareSize, true);
     } else if (cData.patternType == "aruco") {
-      cv::Ptr<cv::aruco::Dictionary> dictPtr = loadDictionary(cData.dictionary);
+      cv::Ptr<cv::aruco::Dictionary> dictPtr =
+          getArucoDictionary(cData.dictionary);
       detector = cv::makePtr<ArucoDetector>(dictPtr, cData.markerSize,
                                             cv::aruco::DetectorParameters());
     } else if (cData.patternType == "charuco") {
-      cv::Ptr<cv::aruco::Dictionary> dictPtr = loadDictionary(cData.dictionary);
+      cv::Ptr<cv::aruco::Dictionary> dictPtr =
+          getArucoDictionary(cData.dictionary);
       cv::aruco::CharucoBoard board(cData.patternSize, cData.squareSize,
                                     cData.markerSize, *dictPtr);
       detector = cv::makePtr<CharucoDetector>(board);
@@ -246,7 +219,8 @@ void MultiCameraCalibrator::calibrateIntrinsics() {
     res.imageSize = cData.imageSize;
     cameraCalib_[cid] = res;
 
-    std::cout << "[Camera " << cid << "] RMS=" << rms << std::endl;
+    std::cout << "[Camera " << cid << "] RMS=" << res.reprojectionError
+              << std::endl;
   }
 }
 
@@ -272,7 +246,8 @@ void MultiCameraCalibrator::computeRelativePoses() {
       continue;
 
     cv::Mat R_rel, t_rel;
-    computeRelativePose(rRef, tRef, cRes.rvecs[0], cRes.tvecs[0], R_rel, t_rel);
+    cv::ccalib::computeRelativePose(rRef, tRef, cRes.rvecs[0], cRes.tvecs[0],
+                                    R_rel, t_rel);
     realPoses_[cid] = {R_rel, t_rel};
   }
 }
@@ -360,30 +335,21 @@ void MultiCameraCalibrator::generateReport(const std::string &outputDir) const {
   cv::putText(summary, "Calibration Summary", cv::Point(50, 200),
               cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
 
-  // Create a subfolder "plot" inside outputDir using a system call.
+  // Declare the plot folder using outputDir
   std::string plotFolder = outputDir + "/plot";
-#if defined(_WIN32)
-  std::string mkdirCommand = "mkdir " + plotFolder;
-#else
-  std::string mkdirCommand = "mkdir -p " + plotFolder;
-#endif
-  system(mkdirCommand.c_str());
+  cv::utils::fs::createDirectories(plotFolder);
 
   // Create an instance of the CalibrationVisualizer.
   CalibrationVisualizer viz;
 
   // For each camera, generate and save error plots.
-  // (Assuming that cameraDatas_ holds the per-camera data and that
-  // computePerFrameErrors(...) is available.)
   for (const auto &kv : cameraCalib_) {
     int cid = kv.first;
-    // Check if we have the corresponding camera data.
     auto it = cameraDatas_.find(cid);
     if (it == cameraDatas_.end())
       continue;
     const CameraData &cData = it->second;
 
-    // Compute per-frame errors (this function is assumed available).
     std::vector<double> perFrameErrors = computePerFrameErrors(
         cData.allObjPoints, cData.allImgPoints, kv.second.cameraMatrix,
         kv.second.distCoeffs, kv.second.rvecs, kv.second.tvecs);

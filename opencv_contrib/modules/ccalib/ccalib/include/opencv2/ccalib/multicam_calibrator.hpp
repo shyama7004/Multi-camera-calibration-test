@@ -5,8 +5,8 @@
 #ifndef OPENCV_CCALIB_MULTICAM_CALIBRATOR_HPP
 #define OPENCV_CCALIB_MULTICAM_CALIBRATOR_HPP
 
-#include <opencv2/core.hpp>
 #include <map>
+#include <opencv2/core.hpp>
 #include <string>
 #include <vector>
 
@@ -40,30 +40,14 @@ public:
   ~MultiCameraCalibrator();
 
   /**
-   * @brief Load a single camera dataset from a config file.
-   * (For backward compatibility when using one file per camera.)
-   */
-  void addCamera(const std::string &configPath);
-
-  /**
    * @brief Load multiple cameras dataset from a single config file.
    *
-   * The file should have a “cameras” map with each camera’s config, for
-   * example:
-   * @code
-   * cameras:
-   *   cam1:
-   *     camera_id: 1
-   *     pattern_type: chessboard
-   *     pattern_size: [10, 7]
-   *     square_size: 0.028
-   *     image_paths: ["/path/to/img0.png", ...]
-   *   cam2:
-   *     camera_id: 2
-   *     pattern_type: chessboard
-   *     pattern_size: [10, 7]
-   *     square_size: 0.028
-   *     image_paths: ["/path/to/img0.png", ...]
+   * All the sample yaml files are available on kaggle :
+   * https://www.kaggle.com/fjbwejkfbekw/multicam-calibration
+   * @param configPath path to the YAML/JSON file containing camera
+   * configurations. The file should contain a list of cameras, each with its
+   * own configuration parameters. The format is similar to the one used in
+   * OpenCV's camera calibration samples.
    * @endcode
    */
   void loadMultiCameraConfig(const std::string &configPath);
@@ -94,6 +78,14 @@ public:
    */
   void validateCalibration() const;
 
+  // Accessor for calibration results.
+  const std::map<int, CameraCalibrationResult> &getCalibrationResults() const {
+    return cameraCalib_;
+  }
+
+  // Accessor for display flag.
+  bool getDisplayEnabled() const { return display_; }
+
   /**
    * @brief Enable or disable visualization.
    */
@@ -102,21 +94,21 @@ public:
 private:
   // Internal data structure for each camera.
   struct CameraData {
-	int cameraId = -1;
-	std::string
-		patternType; // e.g., "chessboard", "charuco", "circles", "aruco", etc.
-	cv::Size patternSize;
-	float squareSize = 0.f; // For chessboard, circle grid, etc.
-	float markerSize = 0.f; // For charuco, aruco
-	std::string dictionary; // e.g., "DICT_6X6_250"
-	int calibFlags = 0;     // Calibration flags (default 0)
+    int cameraId = -1;
+    std::string
+        patternType; // e.g., "chessboard", "charuco", "circles", "aruco", etc.
+    cv::Size patternSize;
+    float squareSize = 0.f; // For chessboard, circle grid, etc.
+    float markerSize = 0.f; // For charuco, aruco
+    std::string dictionary; // e.g., "DICT_6X6_250"
+    int calibFlags = 0;     // Calibration flags (default 0)
 
-	std::vector<std::string> imagePaths;
+    std::vector<std::string> imagePaths;
 
-	// Accumulated calibration points.
-	std::vector<std::vector<cv::Point3f>> allObjPoints;
-	std::vector<std::vector<cv::Point2f>> allImgPoints;
-	cv::Size imageSize;
+    // Accumulated calibration points.
+    std::vector<std::vector<cv::Point3f>> allObjPoints;
+    std::vector<std::vector<cv::Point2f>> allImgPoints;
+    cv::Size imageSize;
   };
 
   // Mapping from camera ID to its calibration data.

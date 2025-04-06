@@ -12,6 +12,16 @@
 namespace cv {
 namespace ccalib {
 
+// Color constants for consistency across visualizations.
+namespace vizcolors {
+    const cv::Scalar PLOT_BG(255, 255, 255);
+    const cv::Scalar AXIS_COLOR(0, 0, 0);
+    const cv::Scalar ERROR_COLOR(255, 0, 0);
+    const cv::Scalar DETECTED_COLOR(0, 255, 0);
+    // The following color is used for reprojected corners (yellowish).
+    const cv::Scalar REPROJECTED_COLOR(226, 211, 5);
+}
+
 class CV_EXPORTS CalibrationVisualizer {
 public:
   CalibrationVisualizer();
@@ -19,10 +29,9 @@ public:
   /**
    * @brief Draw reprojection error vectors on top of an image.
    */
-  cv::Mat
-  drawReprojErrorMap(const cv::Mat &image,
-                     const std::vector<cv::Point2f> &detectedCorners,
-                     const std::vector<cv::Point2f> &reprojectedCorners) const;
+  cv::Mat drawReprojErrorMap(const cv::Mat &image,
+                             const std::vector<cv::Point2f> &detectedCorners,
+                             const std::vector<cv::Point2f> &reprojectedCorners) const;
 
   /**
    * @brief Visualize multi-camera extrinsics in 3D (requires opencv_viz).
@@ -35,12 +44,13 @@ public:
 
   /**
    * @brief Produce an image showing how the lens warps a synthetic grid.
+   * Note: File saving is removed to separate visualization from I/O.
    */
   cv::Mat drawDistortionGrid(const CameraCalibrationResult &res, int gridSize,
                              cv::Size imageSize) const;
 
   /**
-   * @brief A histogram of errors with axis labels for “Reprojection Error (X -axis)”
+   * @brief A histogram of errors with axis labels for “Reprojection Error (X - axis)”
    * vs. “Frequency (Y - axis)”.
    */
   cv::Mat plotErrorHistogram(const std::vector<double> &errors,
