@@ -11,7 +11,7 @@ Before you begin, ensure that you have the following:
 - [OpenCV](https://opencv.org/) repository.
 - [OpenCV Contrib](https://github.com/opencv/opencv_contrib) repository (provides extra modules).
 - My C++ calibration implementation (copy the necessay files from my repo into `ccalib` module of opencv_contrib).
--  Curated images available on Kaggle plus additional public datasets.(Images are be clear, low-noise, and synchronized.)
+-  Curated images available on Kaggle plus additional public datasets.(Images are clear, low-noise, and synchronized.)
 
 ---
 
@@ -58,7 +58,7 @@ make -j$(nproc)
 
 ### 1. Compile the Calibration Tool
 
-After building OpenCV, compile the [sample calibration]() code using your favorite compiler. For example, using GCC with C++17:
+After building OpenCV, compile the [sample calibration](https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/opencv_contrib/modules/ccalib/ccalib/samples/multicam_calib.cpp) code using your favorite compiler. For example, using GCC with C++17:
 ```bash
 g++ multicam_calib.cpp -o multicam_calib \
     -I<path-to-opencv_include> \
@@ -72,10 +72,10 @@ Replace `<path-to-opencv_include>` and `<path-to-opencv_lib>` with the actual di
 ### 2. Configure and Run the Tool
 
 - **Dataset:**
-  Select a sample YAML configuration file from my  curated dataset availabe on kaahhle. This file should specify the image paths and calibration settings.
+  Select a sample YAML configuration file from my  curated dataset availabe on [kaggle](). This file should specify the image paths and calibration settings.
 
 - **Update YAML File:**
-  Edit the sample YAML file availabe for each fiducial pattern present inside my kaggle dataset to update image paths according to your environment. You can use any sample YAML provided in the dataset.
+  Use the provided sample YAML configuration file from my [Kaggle dataset](). This YAML file specifies the image paths and calibration settings for each fiducial pattern. You can also update the YAML file to point to any additional public datasets you prefer.
 
 > Note: Due to time constraints, the fisheye implementation is not available yet. This project is in its initial stage and will be refined as development continues.
 
@@ -101,15 +101,8 @@ To close the 3D window, press `q`. After reviewing the plots, press `q` again to
 
 ## Project Structure
 
-```
-Multi-Camera Calibration Test/
-├── README.md                     # This file
-├── multicam_calib.cpp            # Sample calibration code
-├── config/                       # YAML configuration files for various setups
-├── dataset/                      # Curated calibration images
-└── calibration_results/          # Output directory for calibration results and plots
-```
+<img src = /Users/sankarsanbisoyi/Desktop/TL_O2/Multi-camera-calibration-test/images/directory_structure.png, width = 800, height = 500>
 
 ---
 
->Thanks for testing the code. 
+> Thanks for testing the code.
