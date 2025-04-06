@@ -8,10 +8,10 @@ A short demo video is available to give you a quick overview of the project:
 ## Requirements
 
 Before you begin, ensure that you have the following:
-- [OpenCV](https://opencv.org/) repository.
+- [OpenCV](https://github.com/opencv/opencv) repository.
 - [OpenCV Contrib](https://github.com/opencv/opencv_contrib) repository (provides extra modules).
-- My C++ calibration implementation (copy the necessay files from my repo into `ccalib` module of opencv_contrib).
--  Curated images available on Kaggle plus additional public datasets.(Images are clear, low-noise, and synchronized.)
+- My C++ calibration implementation (copy the necessay files from my repo into `ccalib` module of your `opencv_contrib` repo).
+- Curated images are available on [Kaggle]() plus some additional public datasets.(Images are clear, low-noise, and synchronized.)
 
 ---
 
@@ -89,20 +89,40 @@ Replace `<path-to-opencv_include>` and `<path-to-opencv_lib>` with the actual di
   ./multicam_calib /path/to/dataset/multicam_chessboard.yaml
   ```
 
-### 3. Visual Output
-
 Once executed, the tool will:
-- Display a 3D visualization window showing camera positions and orientations.
+
+- Display a 3D visualization window showing camera positions and orientations. See the example below (a GIF).
 - Generate error histograms and plots to help you assess calibration accuracy.
 
 To close the 3D window, press `q`. After reviewing the plots, press `q` again to save the results in the `calibration_results` directory.
+
+### 3D Visualization of Camera Positions
+
+Below is a GIF demonstrating the 3D visualization of camera positions and orientations, providing an interactive view of the calibration setup.
+
+![3d_viz](https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/images/3d_viz.gif)
+
+Below are side-by-side examples of an error histogram and a reprojection errors plot:
+
+<table>
+  <tr>
+    <td><img src="https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/images/cam1_histogram.png" width="400"></td>
+    <td><img src="https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/images/cam1_reprojErrors.png" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center">Error Histogram</td>
+    <td align="center">Reprojection Errors Plot</td>
+  </tr>
+</table>
 
 ---
 
 ## Project Structure
 
-<img src = /Users/sankarsanbisoyi/Desktop/TL_O2/Multi-camera-calibration-test/images/directory_structure.png, width = 800, height = 500>
+<img src = https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/images/directory_structure.png>
 
----
+> Note: Due to time constraints, only a limited set of tasks has been implemented so far, but additional features will be added as the project progresses.
 
-> Thanks for testing the code.
+```
+Thanks for testing the code.
+```
