@@ -2,8 +2,14 @@
 
 This project is a tool for testing and visualizing multi-camera calibration. It was developed as part of a Google Summer of Code initiative to enhance and streamline the calibration process for multi-camera setups. By using this tool, developers can easily test calibration pipelines, visualize camera poses in 3D, and analyze error distributions.
 
-A short demo video is available to give you a quick overview of the project:
-[Demo Video](#) <!-- Insert your demo video link here -->
+A short demo video is available below, click on it to get a quick overview of the project:
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=YzzY50zVvOg">
+    <img src="https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/images/Multi-Camera%20Calibration%20test%20(1).png" alt="Watch the demo" style="width:400px; height:300px;">
+  </a>
+</div>
+
 
 ## Requirements
 
@@ -11,7 +17,7 @@ Before you begin, ensure that you have the following:
 - [OpenCV](https://github.com/opencv/opencv) repository.
 - [OpenCV Contrib](https://github.com/opencv/opencv_contrib) repository (provides extra modules).
 - My C++ calibration implementation (copy the necessay files from my repo into `ccalib` module of your `opencv_contrib` repo).
-- Curated images are available on [Kaggle]() plus some additional public datasets.(Images are clear, low-noise, and synchronized.)
+- Curated raw images are available on [Kaggle](https://www.kaggle.com/datasets/kalpitnathan/multi-camera-calibration-test-dataset), along with additional public datasets. (These images are clear, low-noise, and synchronized.)
 
 ---
 
