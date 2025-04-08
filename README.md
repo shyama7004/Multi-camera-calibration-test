@@ -6,7 +6,7 @@ A short demo video is available below, click on it to get a quick overview of th
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=YzzY50zVvOg">
-    <img src="https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/images/Multi-Camera%20Calibration%20test%20(1).png" alt="Watch the demo" style="width:400px; height:300px;">
+    <img src="https://github.com/shyama7004/Multi-camera-calibration-test/blob/main/images/Multi-Camera%20Calibration%20test.png" alt="Watch the demo" style="width:400px; height:300px;">
   </a>
 </div>
 
