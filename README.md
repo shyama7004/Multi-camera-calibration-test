@@ -1,4 +1,7 @@
-# Multi-Camera Calibration Test
+# GSOC Project : Multi-Camera Calibration Test
+
+### Mentors : Yuantao Feng and Alexander Smorkalov
+
 
 This project is a tool for testing and visualizing multi-camera calibration. It was developed as part of a Google Summer of Code initiative to enhance and streamline the calibration process for multi-camera setups. By using this tool, developers can easily test calibration pipelines, visualize camera poses in 3D, and analyze error distributions.
 
